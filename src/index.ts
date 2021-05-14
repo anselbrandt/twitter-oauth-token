@@ -20,7 +20,7 @@ async function main() {
   const method = "POST";
   const baseURL = "https://api.twitter.com/oauth/request_token";
 
-  let params: any = {
+  const params: any = {
     oauth_callback: TWITTER_CALLBACK,
     oauth_consumer_key: TWITTER_CLIENT_ID,
     oauth_signature_method: "HMAC-SHA1",
@@ -49,14 +49,27 @@ async function main() {
     .update(baseString)
     .digest("base64");
 
+  const headerParams = Object.fromEntries(
+    Object.entries(params).map(([k, v]: [any, any]) => [
+      k,
+      `"${fixedEncodeURIComponent(v)}"`,
+    ])
+  );
+
   const signedParams = {
-    ...params,
-    ["oauth_signature"]: fixedEncodeURIComponent(signature),
+    ...headerParams,
+    ["oauth_signature"]: `"${fixedEncodeURIComponent(signature)}"`,
   };
+
+  const headerString = Object.entries(signedParams)
+    .map((entry) => entry.join("="))
+    .join(", ");
+
+  console.log(headerString);
 
   const response = await fetch(baseURL, {
     headers: {
-      Authorization: `OAuth ${signedParams}`,
+      Authorization: `OAuth ${headerString}`,
     },
   });
 
@@ -69,3 +82,4 @@ main().catch((error) => console.error(error));
 
 // https://developer.twitter.com/en/docs/authentication/oauth-1-0a/creating-a-signature
 // https://developer.twitter.com/en/docs/authentication/oauth-1-0a/percent-encoding-parameters
+// https://developer.twitter.com/en/docs/authentication/api-reference/request_token
