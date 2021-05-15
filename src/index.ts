@@ -62,7 +62,6 @@ async function main() {
   };
 
   const headerString = Object.entries(signedParams)
-    .map(([k, v]) => [k, `"${v}"`])
     .map((entry) => entry.join("="))
     .join(",");
 
