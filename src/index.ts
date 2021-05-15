@@ -21,12 +21,12 @@ async function main() {
   const baseURL = "https://api.twitter.com/oauth/request_token";
 
   const params: any = {
-    oauth_callback: TWITTER_CALLBACK,
     oauth_consumer_key: TWITTER_CLIENT_ID,
     oauth_signature_method: "HMAC-SHA1",
     oauth_timestamp: Math.floor(Date.now() / 1000),
     oauth_nonce: v4(),
     oauth_version: "1.0",
+    oauth_callback: TWITTER_CALLBACK,
   };
 
   const paramString = Object.entries(params)
@@ -52,28 +52,30 @@ async function main() {
   const headerParams = Object.fromEntries(
     Object.entries(params).map(([k, v]: [any, any]) => [
       k,
-      `"${fixedEncodeURIComponent(v)}"`,
+      `${fixedEncodeURIComponent(v)}`,
     ])
   );
 
   const signedParams = {
     ...headerParams,
-    ["oauth_signature"]: `"${fixedEncodeURIComponent(signature)}"`,
+    ["oauth_signature"]: `${fixedEncodeURIComponent(signature)}`,
   };
 
   const headerString = Object.entries(signedParams)
+    .map(([k, v]) => [k, `"${v}"`])
     .map((entry) => entry.join("="))
-    .join(", ");
+    .join(",");
 
-  console.log(headerString);
+  const authString = `OAuth ${headerString}`;
 
   const response = await fetch(baseURL, {
+    method: "POST",
     headers: {
-      Authorization: `OAuth ${headerString}`,
+      Authorization: authString,
     },
   });
 
-  const json = await response.json();
+  const json = await response.text();
 
   console.log(json);
 }
